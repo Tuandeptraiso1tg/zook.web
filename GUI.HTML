@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tính chỉ số BMI và dinh dưỡng</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #87CEEB, #f0f8ff);
+            position: relative;
+            margin: 0;
+        }
+        .container {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            max-width: 450px;
+            text-align: center;
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result, .nutrients, .food-selection {
+            margin-top: 15px;
+            text-align: left;
+        }
+        select {
+            width: 100%;
+            padding: 8px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .selected-foods {
+            margin-top: 10px;
+            list-style-type: none;
+            padding: 0;
+        }
+        .selected-foods li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Tính Chỉ Số BMI và Nhu Cầu Dinh Dưỡng</h2>
+        <label for="weight">Cân nặng (kg):</label>
+        <input type="number" id="weight" placeholder="Nhập cân nặng" required>
+        
+        <label for="height">Chiều cao (m):</label>
+        <input type="number" id="height" placeholder="Nhập chiều cao" step="0.01" required>
+        
+        <button onclick="calculateBMI()">Tính BMI</button>
+        
+        <div class="result" id="result"></div>
+        <button id="showNutrients" style="display:none;" onclick="showNutrients()">Xem nhu cầu dinh dưỡng</button>
+        
+        <div class="nutrients" id="nutrients"></div>
+        <div class="food-selection" id="foodSelection" style="display:none;">
+            <h3>Chọn thực phẩm:</h3>
+            <select id="foodDropdown">
+                <!-- Thực phẩm sẽ được thêm ở đây -->
+            </select>
+            <button onclick="addFood()">Thêm thực phẩm</button>
+            <ul class="selected-foods" id="selectedFoods"></ul>
+            <button onclick="calculateFood()">Tính lượng thực phẩm cần ăn</button>
+            <div class="result" id="foodResult"></div>
+        </div>
+    </div>
+
+    <script>
+        
+        const foodDatabase = [
+            { name: "Cơm", calories: 130, fiber: 0.4, protein: 2.7, fat: 0.3 },
+            { name: "Thịt gà", calories: 165, fiber: 0, protein: 31, fat: 3.6 },
+            { name: "Cá hồi", calories: 208, fiber: 0, protein: 20, fat: 13 },
+            { name: "Rau muống", calories: 19, fiber: 2, protein: 2.6, fat: 0.1 },
+            { name: "Trứng gà", calories: 155, fiber: 0, protein: 13, fat: 11 },
+            { name: "Sữa tươi", calories: 42, fiber: 0, protein: 3.4, fat: 1 },
+            { name: "Chuối", calories: 89, fiber: 2.6, protein: 1.1, fat: 0.3 },
+            { name: "Táo", calories: 52, fiber: 2.4, protein: 0.3, fat: 0.2 },
+            { name: "Khoai lang", calories: 86, fiber: 3, protein: 1.6, fat: 0.1 },
+            { name: "Đậu hũ", calories: 76, fiber: 0.3, protein: 8, fat: 4.8 },
+            { name: "Rau cải", calories: 25, fiber: 1.8, protein: 2.3, fat: 0.2 },
+            { name: "Cà chua", calories: 18, fiber: 1.2, protein: 0.9, fat: 0.2 },
+            { name: "Rau xà lách", calories: 15, fiber: 1.1, protein: 1.2, fat: 0.2 },
+            { name: "Dưa chuột", calories: 16, fiber: 0.5, protein: 0.7, fat: 0.1 },
+            { name: "Tôm", calories: 99, fiber: 0, protein: 24, fat: 0.8 },
+            { name: "Thịt bò", calories: 250, fiber: 0, protein: 26, fat: 15 }
+        ];
+
+
+
+
+        
+
+        let dailyRequirements = {
+            calories: 0,
+            fiber: 30,
+            protein: 50,
+            fat: 70
+        };
+
+        let selectedFoods = [];
+
+        function calculateBMI() {
+            const weight = parseFloat(document.getElementById("weight").value);
+            const height = parseFloat(document.getElementById("height").value);
+            const resultElement = document.getElementById("result");
+            const nutrientsButton = document.getElementById("showNutrients");
+            
+            if (weight > 0 && height > 0) {
+                const bmi = weight / (height * height);
+                resultElement.innerText = "Chỉ số BMI của bạn: " + bmi.toFixed(2);
+                nutrientsButton.style.display = "block";
+            } else {
+                resultElement.innerText = "Vui lòng nhập giá trị hợp lệ.";
+                nutrientsButton.style.display = "none";
+            }
+        }
+
+        function showNutrients() {
+            const nutrientsElement = document.getElementById("nutrients");
+            const foodSelection = document.getElementById("foodSelection");
+            const bmi = parseFloat(document.getElementById("result").innerText.split(": ")[1]);
+            
+            if (bmi < 18.5) {
+                dailyRequirements.calories = 2200;
+            } else if (bmi >= 18.5 && bmi <= 24.9) {
+                dailyRequirements.calories = 2000;
+            } else {
+                dailyRequirements.calories = 1500;
+            }
+
+            nutrientsElement.innerHTML = `
+                <strong>Nhu cầu dinh dưỡng hàng ngày:</strong><br>
+                - Calo: ${dailyRequirements.calories} kcal<br>
+                - Chất xơ: ${dailyRequirements.fiber} g<br>
+                - Protein: ${dailyRequirements.protein} g<br>
+                - Chất béo: ${dailyRequirements.fat} g<br>
+            `;
+            foodSelection.style.display = "block";
+
+            populateFoodDropdown();
+        }
+
+        function populateFoodDropdown() {
+            const dropdown = document.getElementById("foodDropdown");
+            dropdown.innerHTML = ''; // Xóa danh sách cũ
+            foodDatabase.forEach(food => {
+                const option = document.createElement("option");
+                option.value = JSON.stringify(food);
+                option.textContent = food.name;
+                dropdown.appendChild(option);
+            });
+        }
+
+        function addFood() {
+            const selectedFood = JSON.parse(document.getElementById("foodDropdown").value);
+            selectedFoods.push(selectedFood);
+
+            const selectedFoodsList = document.getElementById("selectedFoods");
+            const listItem = document.createElement("li");
+            listItem.textContent = selectedFood.name;
+            selectedFoodsList.appendChild(listItem);
+        }
+
+        function calculateFood() {
+            const foodResult = document.getElementById("foodResult");
+
+            if (selectedFoods.length === 0) {
+                foodResult.innerText = "Vui lòng thêm ít nhất một thực phẩm.";
+                return;
+            }
+
+            let remaining = { ...dailyRequirements };
+            let output = `<strong>Lượng thực phẩm cần ăn:</strong><br>`;
+
+            selectedFoods.forEach(food => {
+                const calorieRatio = remaining.calories / food.calories;
+                const fiberRatio = remaining.fiber / food.fiber;
+                const proteinRatio = remaining.protein / food.protein;
+                const fatRatio = remaining.fat / food.fat;
+
+                const neededAmount = Math.min(calorieRatio, fiberRatio, proteinRatio, fatRatio) * 100;
+
+                output += `- ${food.name}: ${neededAmount.toFixed(2)} g<br>`;
+
+                remaining.calories -= neededAmount * food.calories / 100;
+                remaining.fiber -= neededAmount * food.fiber / 100;
+                remaining.protein -= neededAmount * food.protein / 100;
+                remaining.fat -= neededAmount * food.fat / 100;
+            });
+
+            foodResult.innerHTML = output;
+        }
+    </script>
+</body>
+</html>
